@@ -682,6 +682,7 @@ D단지
         const CUSTOM_INDUSTRIES_KEY = 'prompt_v2_custom_industries';
         const ADMIN_PASSWORD_API_URL = 'https://script.google.com/macros/s/AKfycbzjPGoBwKYwBVvSl4TN9ScCwscPhDCguVQXVwJxzJoY4u8YR4ZzZQ4xVnY8t7KI_C7q/exec';
         let customIndustries = {};
+        let currentCustomAdminPassword = '';
 
         const promptTitle = document.getElementById('promptTitle');
         const promptText = document.getElementById('promptText');
@@ -697,8 +698,13 @@ D단지
                 customIndustries = {};
             }
 
-            Object.keys(customIndustries).forEach(key => {
-                const item = customIndustries[key];
+            applyCustomIndustries(customIndustries);
+            loadCustomIndustriesFromServer();
+        }
+
+        function applyCustomIndustries(items) {
+            Object.keys(items || {}).forEach(key => {
+                const item = items[key];
                 industryData[key] = { title: item.name + ' 분석 프롬프트', icon: '➕' };
                 industryPrompts[key] = item.prompt;
             });
@@ -708,6 +714,24 @@ D단지
             localStorage.setItem(CUSTOM_INDUSTRIES_KEY, JSON.stringify(customIndustries));
         }
 
+        function loadCustomIndustriesFromServer() {
+            callPromptApi('listPromptIndustries', {})
+                .then(function(result) {
+                    if (!result || !result.ok || !Array.isArray(result.items)) return;
+                    const nextItems = {};
+                    result.items.forEach(function(item) {
+                        if (!item.key || !item.name || !item.prompt) return;
+                        nextItems['custom_' + item.key] = { name: item.name, prompt: item.prompt };
+                    });
+                    customIndustries = nextItems;
+                    applyCustomIndustries(customIndustries);
+                    persistCustomIndustries();
+                    renderCustomIndustryButtons();
+                })
+                .catch(function() {
+                    renderCustomIndustryButtons();
+                });
+        }
         function renderCustomIndustryButtons() {
             const list = document.getElementById('customIndustryList');
             if (!list) return;
@@ -755,6 +779,7 @@ D단지
             error.textContent = '확인 중입니다...';
             checkAdminPasswordForCustomIndustry(password)
                 .then(function() {
+                    currentCustomAdminPassword = password;
                     closeCustomIndustryPasswordModal();
                     openCustomIndustryModal();
                 })
@@ -773,16 +798,20 @@ D단지
                 });
             }
 
-            return checkAdminPasswordByJsonp(password);
+            return callPromptApi('checkPromptPassword', { password: password });
         }
 
-        function checkAdminPasswordByJsonp(password) {
+        function callPromptApi(action, params) {
             return new Promise(function(resolve, reject) {
-                const callbackName = 'promptPasswordCallback_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
+                const callbackName = 'promptApiCallback_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
                 const script = document.createElement('script');
+                const searchParams = new URLSearchParams(Object.assign({}, params, {
+                    action: action,
+                    callback: callbackName
+                }));
                 const timeout = window.setTimeout(function() {
                     cleanup();
-                    reject(new Error('비밀번호 확인 서버에 연결하지 못했습니다. Apps Script 배포 주소를 확인하세요.'));
+                    reject(new Error('Apps Script 서버에 연결하지 못했습니다. 배포 주소를 확인하세요.'));
                 }, 10000);
 
                 function cleanup() {
@@ -793,19 +822,14 @@ D단지
 
                 window[callbackName] = function(result) {
                     cleanup();
-                    if (result && result.ok) {
-                        resolve(true);
-                    } else {
-                        reject(new Error((result && result.message) || '관리자 비밀번호가 올바르지 않습니다.'));
-                    }
+                    resolve(result || {});
                 };
 
                 script.onerror = function() {
                     cleanup();
-                    reject(new Error('비밀번호 확인 서버에 연결하지 못했습니다.'));
+                    reject(new Error('Apps Script 서버에 연결하지 못했습니다.'));
                 };
-                script.src = ADMIN_PASSWORD_API_URL + '?action=checkPromptPassword&password='
-                    + encodeURIComponent(password) + '&callback=' + encodeURIComponent(callbackName);
+                script.src = ADMIN_PASSWORD_API_URL + '?' + searchParams.toString();
                 document.body.appendChild(script);
             });
         }
@@ -835,19 +859,52 @@ D단지
             const error = document.getElementById('customIndustryError');
 
             if (!name || !prompt) {
-                error.textContent = '업종명과 특화 프롬프트를 모두 입력하세요.';
+                error.textContent = '업종명과 프롬프트를 모두 입력하세요.';
+                return;
+            }
+            if (!currentCustomAdminPassword) {
+                error.textContent = '관리자 확인을 다시 진행하세요.';
                 return;
             }
 
-            const key = 'custom_' + Date.now();
-            customIndustries[key] = { name: name, prompt: prompt };
-            industryData[key] = { title: name + ' 분석 프롬프트', icon: '➕' };
-            industryPrompts[key] = prompt;
-            persistCustomIndustries();
-            renderCustomIndustryButtons();
-            closeCustomIndustryModal();
-            selectIndustry(key);
+            error.textContent = '저장 중입니다...';
+            saveCustomIndustryToServer(name, prompt, currentCustomAdminPassword)
+                .then(function(result) {
+                    if (!result || !result.ok) {
+                        throw new Error((result && result.message) || '저장하지 못했습니다.');
+                    }
+
+                    const key = 'custom_' + result.key;
+                    customIndustries[key] = { name: result.name || name, prompt: result.prompt || prompt };
+                    industryData[key] = { title: (result.name || name) + ' 분석 프롬프트', icon: '➕' };
+                    industryPrompts[key] = result.prompt || prompt;
+                    persistCustomIndustries();
+                    renderCustomIndustryButtons();
+                    closeCustomIndustryModal();
+                    selectIndustry(key);
+                })
+                .catch(function(err) {
+                    error.textContent = (err && err.message) || '저장하지 못했습니다.';
+                });
         }
+
+        function saveCustomIndustryToServer(name, prompt, password) {
+            if (window.google && google.script && google.script.run) {
+                return new Promise(function(resolve, reject) {
+                    google.script.run
+                        .withSuccessHandler(resolve)
+                        .withFailureHandler(reject)
+                        .savePromptIndustry(name, prompt, password);
+                });
+            }
+
+            return callPromptApi('savePromptIndustry', {
+                name: name,
+                prompt: prompt,
+                password: password
+            });
+        }
+
         function selectIndustry(key) {
             // 버튼 활성화 상태 변경
             document.querySelectorAll('.ind-btn').forEach(btn => btn.classList.remove('active'));
@@ -888,6 +945,7 @@ D단지
     </script>
 </body>
 </html>
+
 
 
 
