@@ -1,1 +1,901 @@
-test
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>업종별 감사보고서 및 신용정보 분석기 V2</title>
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <style>
+:root {
+  --sky:#4a9fd4;
+  --sky-dark:#2e7fb8;
+  --sky-deep:#1a5e8a;
+  --sky-soft:#d6eaf8;
+  --sky-pale:#eaf4fc;
+  --sky-border:#b3d4ec;
+  --white:#ffffff;
+  --bg:#f2f7fb;
+  --text:#1e2530;
+  --muted:#637284;
+  --light:#b0bec5;
+  --border:#dde5ed;
+  --r:8px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body { min-height: 100%; }
+
+body {
+  font-family: 'Pretendard', 'Noto Sans KR', 'Malgun Gothic', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding: 0;
+  overflow-x: hidden;
+  line-height: 1.65;
+}
+
+.space-bg,
+.stars { display: none; }
+
+.container {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  background: var(--white);
+  border-bottom: 2px solid var(--sky);
+  padding: 14px 18px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  box-shadow: 0 1px 4px rgba(0,0,0,.07);
+  position: sticky;
+  top: 0;
+  z-index: 900;
+}
+
+.header h1 {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--sky-dark);
+  letter-spacing: -0.4px;
+  white-space: nowrap;
+  padding-right: 14px;
+  border-right: 1px solid var(--sky-border);
+}
+
+.header p {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 500;
+  margin-left: auto;
+}
+
+.control-panel {
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 16px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.04);
+}
+
+.btn-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  align-items: center;
+}
+
+.ind-btn {
+  height: 32px;
+  padding: 0 12px;
+  border: 1.5px solid var(--sky-border);
+  border-radius: var(--r);
+  background: var(--white);
+  color: var(--sky-deep);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 3px var(--sky-border);
+  transition: background .15s, transform .1s, box-shadow .1s, border-color .15s;
+}
+
+.ind-btn:hover {
+  background: var(--sky-pale);
+  border-color: var(--sky);
+}
+
+.ind-btn:active {
+  box-shadow: none;
+  transform: translateY(3px);
+}
+
+.ind-btn.active {
+  background: var(--sky);
+  border-color: var(--sky-dark);
+  color: #fff;
+  box-shadow: 0 3px var(--sky-dark);
+}
+
+.result-container {
+  flex: 1;
+  margin: 14px 16px 16px;
+  min-height: 0;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,.06);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+.placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 28px;
+  color: var(--text);
+}
+
+.guide-box {
+  width: min(760px, 100%);
+  background: var(--sky-pale);
+  padding: 24px 26px;
+  border-radius: 10px;
+  border: 1.5px dashed var(--sky-border);
+  color: var(--text);
+}
+
+.guide-box h3 {
+  color: var(--sky-dark) !important;
+  font-size: 16px;
+  margin-bottom: 14px !important;
+}
+
+.guide-box ol {
+  padding-left: 22px;
+  line-height: 1.85;
+  font-size: 14px;
+}
+
+.guide-links a {
+  color: var(--sky-deep);
+  text-decoration: none;
+  font-weight: 700;
+  margin: 0 4px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: var(--white);
+  border: 1px solid var(--sky-border);
+  transition: background .15s, color .15s;
+}
+
+.guide-links a:hover {
+  background: var(--sky-soft);
+  color: var(--sky-dark);
+}
+
+.prompt-view {
+  display: none;
+  height: 100%;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.prompt-header {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 16px;
+  background: var(--sky-pale);
+  border-bottom: 1px solid var(--sky-border);
+}
+
+.prompt-title {
+  color: var(--sky-dark);
+  font-weight: 800;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.copy-btn {
+  height: 32px;
+  background: var(--sky);
+  color: #fff;
+  border: none;
+  border-radius: var(--r);
+  padding: 0 14px;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 3px var(--sky-dark);
+  transition: background .15s, transform .1s, box-shadow .1s;
+}
+
+.copy-btn:hover { background: var(--sky-dark); }
+.copy-btn:active { box-shadow: none; transform: translateY(3px); }
+
+.prompt-content {
+  flex: 1;
+  min-height: 0;
+  padding: 22px 26px;
+  color: var(--text);
+  font-family: 'Pretendard', 'Noto Sans KR', 'Malgun Gothic', system-ui, sans-serif;
+  font-size: 12.5px;
+  line-height: 1.62;
+  white-space: pre-wrap;
+  overflow-y: auto;
+  background: #fff;
+}
+
+.industry-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  width: fit-content;
+  margin: 0 0 14px;
+  padding: 7px 11px;
+  border-radius: 999px;
+  background: var(--sky-pale);
+  border: 1px solid var(--sky-border);
+  color: var(--sky-dark);
+  font-family: 'Pretendard', 'Noto Sans KR', 'Malgun Gothic', system-ui, sans-serif;
+  font-size: 12.5px;
+  font-weight: 800;
+}
+
+.industry-section-first {
+  display: block;
+  margin-bottom: 18px;
+  padding: 16px 18px;
+  border: 1px solid var(--sky-border);
+  border-radius: 10px;
+  background: var(--sky-pale);
+  color: var(--text);
+}
+
+.common-section-after {
+  display: block;
+  padding-top: 16px;
+  border-top: 2px solid var(--sky-soft);
+}
+.prompt-content::-webkit-scrollbar { width: 7px; height: 7px; }
+.prompt-content::-webkit-scrollbar-track { background: var(--bg); }
+.prompt-content::-webkit-scrollbar-thumb { background: var(--sky-border); border-radius: 4px; }
+.prompt-content::-webkit-scrollbar-thumb:hover { background: var(--sky); }
+
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: var(--sky-dark);
+  color: white;
+  padding: 10px 22px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 13px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.22);
+  opacity: 0;
+  transition: .28s ease;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toast.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+
+.add-ind-btn { border-style: dashed; background: var(--sky-pale); }
+.custom-industry-list { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 9px; padding-top: 9px; border-top: 1px solid var(--border); }
+.custom-ind-btn { background: #fff; }
+.custom-modal-backdrop { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; padding: 20px; background: rgba(15, 23, 42, .42); backdrop-filter: blur(4px); z-index: 1200; }
+.custom-modal-backdrop.show { display: flex; }
+.custom-modal { width: min(620px, calc(100vw - 32px)); background: #fff; border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 18px 48px rgba(15, 23, 42, .22); overflow: hidden; }
+.custom-modal-head { padding: 18px 20px 10px; }
+.custom-modal-title { font-size: 17px; font-weight: 800; color: var(--sky-dark); }
+.custom-modal-desc { margin-top: 5px; color: var(--muted); font-size: 13px; }
+.custom-modal-body { display: grid; gap: 12px; padding: 12px 20px 18px; }
+.custom-field { display: grid; gap: 7px; }
+.custom-field label { font-size: 12.5px; font-weight: 800; color: var(--text); }
+.custom-field input, .custom-field textarea { width: 100%; border: 1.5px solid var(--sky-border); border-radius: var(--r); background: var(--sky-pale); color: var(--text); font-family: inherit; font-size: 13px; outline: none; }
+.custom-field input { height: 36px; padding: 0 11px; }
+.custom-field textarea { min-height: 180px; resize: vertical; padding: 10px 11px; line-height: 1.55; }
+.custom-field input:focus, .custom-field textarea:focus { border-color: var(--sky); background: #fff; box-shadow: 0 0 0 3px rgba(74, 159, 212, .14); }
+.custom-modal-error { min-height: 18px; color: #b42318; font-size: 12px; font-weight: 700; }
+.custom-modal-actions { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 20px 16px; border-top: 1px solid var(--border); background: #fbfdff; }
+.custom-action-btn { height: 34px; padding: 0 14px; border-radius: var(--r); border: 1.5px solid var(--border); background: #fff; color: var(--muted); font-family: inherit; font-size: 13px; font-weight: 800; cursor: pointer; }
+.custom-action-btn.primary { border-color: var(--sky-dark); background: var(--sky); color: #fff; box-shadow: 0 3px var(--sky-dark); }
+@media (max-width: 760px) {
+  .header { align-items: flex-start; flex-direction: column; padding: 12px; }
+  .header h1 { border-right: 0; padding-right: 0; white-space: normal; }
+  .header p { margin-left: 0; }
+  .control-panel { padding: 10px 12px; }
+  .btn-group { gap: 6px; }
+  .ind-btn { flex: 1 1 calc(50% - 6px); }
+  .result-container { margin: 12px; }
+  .prompt-header { align-items: flex-start; flex-direction: column; }
+  .copy-btn { width: 100%; justify-content: center; }
+}
+</style>
+</head>
+<body>
+
+    <div class="space-bg"></div>
+    <div class="stars"></div>
+
+    <div class="container">
+        <div class="header">
+            <h1>업종별 감사보고서 & 신용정보 분석</h1>
+            <p>AI 재무분석을 위한 최적화 프롬프트 생성기</p>
+        </div>
+
+        <div class="control-panel">
+            <div class="btn-group">
+                <button class="ind-btn" data-key="construction" onclick="selectIndustry('construction')">🏗️ 건설분양업</button>
+                <button class="ind-btn" data-key="manufacturing" onclick="selectIndustry('manufacturing')">🏭 제조업</button>
+                <button class="ind-btn" data-key="retail" onclick="selectIndustry('retail')">🛒 도소매업</button>
+                <button class="ind-btn" data-key="bio" onclick="selectIndustry('bio')">🧬 신약/바이오</button>
+                <button class="ind-btn" data-key="rental" onclick="selectIndustry('rental')">🏢 임대업</button>
+                <button class="ind-btn" data-key="service" onclick="selectIndustry('service')">💼 서비스업</button>
+                <button class="ind-btn" data-key="hospitality" onclick="selectIndustry('hospitality')">🏨 숙박/레저업</button>
+                <button class="ind-btn" data-key="trade" onclick="selectIndustry('trade')">🌐 무역업</button>
+                <button class="ind-btn" data-key="it" onclick="selectIndustry('it')">💻 IT/게임</button>
+                <button class="ind-btn" data-key="others" onclick="selectIndustry('others')">🎸 기타 (공통)</button>
+                <button class="ind-btn add-ind-btn" onclick="openCustomIndustryPasswordModal()">＋ 업종 추가</button>
+            </div>
+            <div class="custom-industry-list" id="customIndustryList"></div>
+        </div>
+
+        <div class="result-container">
+            <div id="initialView" class="placeholder">
+                <div class="guide-box">
+                    <h3 style="margin-bottom:15px; color:#1e293b;">📋 사용 가이드</h3>
+                    <ol>
+                        <li>상단의 버튼에서 분석할 <strong>업종을 선택</strong>하세요.</li>
+                        <li>생성된 프롬프트 우측 상단의 <strong>"복사(COPY)"</strong> 버튼을 클릭하세요.</li>
+                        <li>
+                            추천 AI 사이트에 접속하여 자료(감사보고서, 신용정보 등)를 업로드하고 프롬프트를 붙여넣으세요.<br>
+                            <span class="guide-links">
+                                <a href="https://claude.ai/" target="_blank">Claude</a>
+                                <a href="https://gemini.google.com/app?hl=ko" target="_blank">Gemini</a>
+                                <a href="https://www.perplexity.ai/" target="_blank">Perplexity</a>
+                            </span>
+                        </li>
+                    </ol>
+                    <p style="margin-top:15px; font-size:0.85rem; color:#64748b;">
+                        ※ <strong>은행연합회 신용정보</strong> 자료를 함께 첨부하면, 감사보고서 주석과 대사(Cross-Check)하여 불일치 항목을 자동으로 찾아줍니다.
+                    </p>
+                </div>
+            </div>
+
+            <div id="promptView" class="prompt-view">
+                <div class="prompt-header">
+                    <div class="prompt-title" id="promptTitle"></div>
+                    <button class="copy-btn" onclick="copyPrompt()">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+                        복사 (COPY)
+                    </button>
+                </div>
+                <div class="prompt-content" id="promptText"></div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <div class="custom-modal-backdrop" id="customPasswordModal" aria-hidden="true">
+        <div class="custom-modal" role="dialog" aria-modal="true" aria-labelledby="customPasswordTitle">
+            <div class="custom-modal-head">
+                <div class="custom-modal-title" id="customPasswordTitle">관리자 확인</div>
+                <div class="custom-modal-desc">업종 프롬프트를 추가하려면 list 시트의 관리자비밀번호를 입력하세요.</div>
+            </div>
+            <div class="custom-modal-body">
+                <div class="custom-field">
+                    <label for="customAdminPassword">관리자 비밀번호</label>
+                    <input id="customAdminPassword" type="password" autocomplete="current-password" placeholder="관리자 비밀번호">
+                </div>
+                <div class="custom-modal-error" id="customPasswordError"></div>
+            </div>
+            <div class="custom-modal-actions">
+                <button class="custom-action-btn" onclick="closeCustomIndustryPasswordModal()">취소</button>
+                <button class="custom-action-btn primary" onclick="verifyCustomIndustryPassword()">확인</button>
+            </div>
+        </div>
+    </div>
+    <div class="custom-modal-backdrop" id="customIndustryModal" aria-hidden="true">
+        <div class="custom-modal" role="dialog" aria-modal="true" aria-labelledby="customIndustryTitle">
+            <div class="custom-modal-head">
+                <div class="custom-modal-title" id="customIndustryTitle">업종 프롬프트 추가</div>
+                <div class="custom-modal-desc">새 업종명과 그 업종에 맞는 특화 프롬프트를 입력하세요.</div>
+            </div>
+            <div class="custom-modal-body">
+                <div class="custom-field">
+                    <label for="customIndustryName">업종명</label>
+                    <input id="customIndustryName" type="text" placeholder="예: 운송업, 플랫폼업, 의료기기업 등">
+                </div>
+                <div class="custom-field">
+                    <label for="customIndustryPrompt">업종별 특화 프롬프트</label>
+                    <textarea id="customIndustryPrompt" placeholder="이 업종에서 중점적으로 분석할 항목, 표 양식, 리스크 체크리스트 등을 입력하세요."></textarea>
+                </div>
+                <div class="custom-modal-error" id="customIndustryError"></div>
+            </div>
+            <div class="custom-modal-actions">
+                <button class="custom-action-btn" onclick="closeCustomIndustryModal()">취소</button>
+                <button class="custom-action-btn primary" onclick="saveCustomIndustry()">추가</button>
+            </div>
+        </div>
+    </div>
+    <div id="toast" class="toast">
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+        프롬프트가 복사되었습니다!
+    </div>
+
+    <script>
+        // =========================================
+        // 1. 공통 프롬프트 (신용정보 대사 기능 강화)
+        // =========================================
+        const commonPrompt = `[역할 정의]
+당신은 금융감독원 심사감리국 수준의 회계 및 재무 분석 전문가입니다. 제공된 감사보고서(재무제표, 주석)와 신용정보(은행연합회 등) 자료를 정밀 분석하여 보고서를 작성해야 합니다. 해당되는 내역이 없거나 중요하지 아니하면(총액기준 1억원 미만 또는 비중이 10% 미만일 경우) 표시하지 아니합니다.
+
+[⭐ 중요: 출력 형식 지침]
+1. **엑셀 호환성**: 모든 표는 엑셀(Excel)에 깨지지 않는 Markdown Table 형식을 유지하세요.
+2. **숫자 서식**: 금액은 '백만원' 단위, 천 단위 콤마(,) 필수, 증감률은 소수점 둘째자리까지(X.XX%) 표시하세요.
+3. **가독성**: 중요한 리스크 항목은 굵게 표시하거나 '🚨' 아이콘을 사용하세요.
+4. 자산합계, 부채합계, 자본총계, 매출액, 매출원가 대비 10% 이하인 계정과목은 '기타자산, 기타부채, 자본기타, 기타판매비와관리비, 기타영업수익, 기타영업비용, 기타영업외수익, 기타영업외비용'로 표시하되, 유의한 과목과 기타의 합계는 각각의 자산합계, 부채합계, 자본총계, 수익, 비용 합계와 당연히 일치하여야 함
+
+[분석 요청사항 1: 신용정보 vs 감사보고서 정합성 검토 (Cross-Check)]
+※ 사용자가 '은행연합회 신용정보' 등의 자료를 첨부했을 경우, 반드시 아래 내용을 대사하여 일치여부와 (유의한 차이(10%가 넘는 차이)가 있는 불일치 사항을 보고하세요. 첨부되지 않았다면 "해당 자료 없음"으로 표기하세요.
+
+| 검토 항목 | 감사보고서(주석) 내용 | 신용정보(첨부자료) 내용 | 차이 | 비고(리스크) |
+|---|---|---|---|---|
+| **차입금/대출금** | 단기/장기차입금 총액 및 차입처 | 금융기관 대출 잔액 및 내역 | 금액 및 건수 차이 | 누락된 부채 존재 가능성 |
+| **담보제공자산** | 주석상 담보제공 내역 | 신용정보상 담보설정 내역 | 설정금액 차이 | 담보권 실행 위험 |
+| **지급보증/우발채무** | 타인을 위한 보증 내역 | 신용정보상 보증채무 내역 | 보증금액 차이 | 부외부채(우발채무) 누락 위험 |
+| **당좌/할인 한도** | 금융약정 주석상 한도액 | 신용정보상 당좌/할인 한도 | 한도금액 차이 | 유동성 여력 확인 |
+| **연체 및 소송** | 우발부채 주석상 소송/제재 | 신용정보상 연체/부도/소송 | 기록 존재 여부 | 🚨 부실 징후 |
+
+[분석 요청사항 2: 공통 재무 현황 분석]
+첨부한 감사보고서 자료를 분석하여 아래 양식에 맞춰 정리하고, 회사에서 발견된 주요 징후를 분석(정리)해주고,
+회사별 관련 주요 재무검토할 토픽을 제시해주세요.
+
+【 SECTION 1: 회사 개요 】
+- 회사명, 상세업종, 주요 사업내용, 대표이사, 설립일
+- 주요 주주 현황(지분율 포함) 및 종업원 수
+- 최근 3년간 주요 연혁 요약
+- 회사 개요 및 사업구조 설명
+- 업종 정보 및 업계 주요 경쟁사, 주요 제품/서비스 또는 진행(공사)프로젝트 등
+- 종속기업 또는 지분법적용투자주식 내역(회사명, 투자지분율, 당기말 장부금액, 지분법손익, 지분법자본변동 등)
+
+【 SECTION 2: 재무상태표 요약 】(단위: 백만원) 
+| 구분 | 전기(말) | 당기(말) | 증감액 | 증감률(%) | 비고 |
+|---|---|---|---|---|---|
+| [자산총계] | | | | | |
+| 유동자산 | | | | | |
+| - 현금및현금성자산 | | | | | |
+| - 매출채권(순액) | | | | | |
+| - 재고자산 | | | | | |
+| 비유동자산 | | | | | |
+| - 유형자산 | | | | | |
+| - 무형자산 | | | | | |
+| [부채총계] | | | | | |
+| 유동부채 | | | | | |
+| - 단기차입금 | | | | | |
+| 비유동부채 | | | | | |
+| - 장기차입금 | | | | | |
+| [자본총계] | | | | | |
+| - 이익잉여금 | | | | | |
+
+【 SECTION 3: 손익계산서 요약 】(단위: 백만원)
+| 구분 | 전기 | 당기 | 증감액 | 증감률(%) | 비고 |
+|---|---|---|---|---|---|
+| 매출액 | | | | | |
+| 매출원가 | | | | | |
+| 매출총이익 | | | | | |
+| 판매비와관리비 | | | | | |
+| 영업이익 | | | | | |
+| (영업이익률 %) | (%) | (%) | - | - | |
+| 영업외손익 | | | | | |
+| 법인세차감전순이익 | | | | | |
+| 당기순이익 | | | | | |
+
+【 SECTION 4: 주요 재무비율 분석 】
+| 구분 | 전기 | 당기 | 증감 | 평가(양호/보통/미흡) |
+|---|---|---|---|---|
+| 유동비율(%) | | | | |
+| 부채비율(%) | | | | |
+| 차입금의존도(%) | | | | |
+| 매출총이익률(%) | | | | |
+| 영업이익률(%) | | | | |
+| 매출채권회전율(회) | | | | |
+| 재고자산회전율(회) | | | | |
+| 영업CF/매출(%) | | | | |
+--------------------------------------------------`;
+
+        // =========================================
+        // 2. 업종별 특화 프롬프트
+        // =========================================
+        const industryPrompts = {
+            others: `[분석 요청] 위 공통 사항을 중심으로 회사의 전반적인 재무 상태를 분석해주세요.`,
+
+            construction: `【 SECTION 5: 건설분양업 특화 심층 분석 】
+1. 프로젝트별 수익성 및 진행 현황 (단위: 백만원)
+| 프로젝트명 | 총도급액(분양액) | 진행률(%) | 누적분양률(%) | 공사미수금 | 분양미수금 | 비고(리스크) |
+|---|---|---|---|---|---|---|
+| (현장 A) | | | | | | |
+| (현장 B) | | | | | | |
+
+2. 주요 회계 및 재무 리스크 검토
+   - **진행기준 수익인식**: 총예정원가 변동 내역 및 진행률 산정의 적정성 (원가 투입법)
+   - **특수관계자 거래 비중**: 주요 특수관계자 List, 주요 특수관계자와의 거래(수익, 비용, 자산, 부채 등)
+   - **미청구공사**: 매출액 대비 비중 추이 및 회수 지연 여부 (잠재적 손실 가능성)
+   - **하자보수충당부채, 공사손실충당부채**: 설정여부, 설정금액 적정성 등 검토
+   - **우발채무(PF)**: 책임준공, 채무인수, 연대보증 등 PF 관련 우발채무 현실화 위험 분석
+   - **재고자산**: 완성주택(악성 미분양) 및 용지(장기 미착공)의 평가손실 충당금 설정 여부
+   - **유동성**: 단기차입금 및 유동성장기부채 상환 계획과 영업현금흐름의 매칭 여부
+
+3. 프로젝트별 진행기준 상세(단위: 백만원, %)
+프로젝트\t총예정원가\t기발생원가\t진행률\t전기 진행률\t진행률 증가\t당기 인식수익\t누적 인식수익\t비고
+A단지
+B단지
+C단지
+D단지
+   - 평균 분양률: ___%
+   - 장기미분양 재고 분석, 분양미수금 회수가능성 검토 : 
+`,
+
+            manufacturing: `【 SECTION 5: 제조업 특화 심층 분석 】
+1. 매출(수익) 분석
+   - 주요 매출 제품이나 고객 내역과 매출 내 제품의 각각의 비중, 증감액, 증감요인 분석
+   - 업종(자동차부품제조업, 금형제조 등) 본인/대리인 판단 오류가 있을지 여부
+   - 기말 거래 급증 또는 특수관계자 매출 집중 여부 등
+   - **매출채권**: 주요 거래처 편중도 및 연체 채권의 대손충당금 설정(률), 매출채권회전율(회) 검토
+
+2. 매출원가, 주요 비용 및 재고자산 분석
+   - 매출원가율 변동 내역 및 변동원인 분석
+   - 제조원가 명세서 분석: 재료비, 노무비, 경비 비중 변화
+   - 원재료 가격 변동이 매출원가율에 미친 영향 (판가 전가 여부)
+   - 장기체화재고 존재 여부, 재고자산평가충당금 설정률(%) 설정금액에 대한 적정성 검토
+
+3. 운전자본 및 자산 효율성
+   - **재고자산**: 원재료/재공품/제품 회전율 분석 및 장기 체화 재고 평가충당금 적정성
+   - **유형자산**: 설비투자(CAPEX) 규모 대비 감가상각비 적정성, 자본적지출 vs 수익적지출, 건설중인자산 증감 내역`,
+
+            retail: `【 SECTION 5: 도소매업 특화 심층 분석 】
+1. 매출 채널 및 재고 관리
+   - 온/오프라인 매출 비중 변화 및 채널별 수익성(마진율) 비교
+   - **재고자산**: 상품 회전율, 시즌 경과 상품(진부화 재고)에 대한 평가손실 인식 현황
+   - 반품률 추이 및 반품충당부채 설정의 적정성
+
+2. 영업비용 및 유동성 구조
+   - 판매수수료, 광고선전비, 운반비의 매출 대비 효율성 분석
+   - 임차료 구조(고정/변동) 및 사용권자산(리스) 회계처리 내역
+   - **현금순환주기**: 매출채권 회수기간 vs 매입채무 지급기간 불일치에 따른 운전자본 부담`,
+
+            bio: `【 SECTION 5: 신약/바이오업 특화 심층 분석 】
+1. R&D 및 무형자산 분석
+   - **개발비 자산화**: 경상연구개발비(비용) vs 개발비(자산) 인식 기준 적정성 (기술적 실현가능성)
+   - 주요 파이프라인 임상 단계 및 성공 가능성, 임상 중단 시 손상차손 인식 여부
+   - 기술이전(L/O) 계약: 마일스톤 수익 인식 시점 및 반환 의무 검토
+
+2. 재무 안정성 (Going Concern)
+   - 지속적인 영업손실에도 불구하고 현금 유동성(Cash Burn Rate) 확보 여부
+   - 전환사채(CB), 신주인수권부사채(BW) 등 메자닌 발행 내역 및 오버행(잠재적 매도물량) 이슈`,
+
+            rental: `【 SECTION 5: 임대업 특화 심층 분석 】
+1. 임대 수익성 및 자산 가치
+   - **공실률 추이**: 주요 공실 발생 원인 및 임대 수익률(Cap Rate) 분석
+   - **투자부동산**: 공정가치 평가 내역(감정평가 등) 및 장부가액 적정성
+   - 주요 임차인(Anchor Tenant) 구성 및 계약 만기 구조
+
+2. 금융비용 및 상환 능력
+   - **이자보상배율**: 임대수익으로 이자비용 커버 가능 여부 (ICR < 1 여부 확인)
+   - 임대보증금 반환 능력: 보유 현금 및 유동성 자산 대비 보증금 비율
+   - 차입금의 LTV 수준 및 리파이낸싱(Refinancing) 리스크`,
+
+            service: `【 SECTION 5: 서비스업 특화 심층 분석 】
+1. 인적자원 및 원가 구조
+   - 매출액 대비 인건비 비중 및 1인당 생산성 추이
+   - 외주용역비 비중 변화 및 효율성 검토
+   - 프로젝트별 진행률에 따른 수익 인식 적정성 (SI, 용역 등)
+
+2. 주요 리스크 관리
+   - 핵심 전문 인력 이탈 리스크
+   - 장기 미회수 매출채권 현황 및 회수 가능성
+   - 리스(사무실, 장비) 회계처리의 적정성`,
+
+            hospitality: `【 SECTION 5: 숙박/레저업 특화 심층 분석 】
+1. 운영 효율성 지표
+   - 객실 가동률(OCC), 객실당 단가(ADR), RevPAR 추이 분석
+   - 식음료(F&B) 부문 매출 비중 및 수익성 기여도
+   - 계절성(Seasonality)에 따른 현금흐름 변동성
+
+2. 회원권 및 부채 관리
+   - **입회보증금**: 만기 도래 회원권의 반환 요청 추이 및 유동성 대응 능력
+   - 유형자산(토지, 건물) 재평가 내역 및 담보 제공 현황
+   - 시설 유지보수(CAPEX) 투자 규모 및 계획`,
+
+            trade: `【 SECTION 5: 무역업 특화 심층 분석 】
+1. 외환 및 무역 금융 리스크
+   - **외화 포지션**: 외화 자산/부채 불일치에 따른 환율 변동 민감도 분석
+   - 파생상품(선물환 등)을 이용한 환헤지 현황 및 평가손익
+   - 무역금융(Usance, DA) 한도 및 사용 내역 대사
+
+2. 수익 구조 및 재고자산
+   - 수출/내수 비중 및 국가별 매출 의존도 리스크
+   - **미착품**: 운송 중인 재고의 실재성 및 소유권 이전 시점(Incoterms)에 따른 매출 인식 적정성
+   - 관세 및 물류비 부담 구조 분석`,
+
+            it: `【 SECTION 5: IT/게임/SW 특화 심층 분석 】
+1. 수익 인식 및 플랫폼 구조
+   - 라이선스/구독/유지보수 매출의 기간 안분 적정성
+   - **플랫폼 수수료**: 총액법 vs 순액법 인식 기준 검토
+   - 게임 아이템 매출의 인식 시점 (소비성 vs 영구적 아이템)
+
+2. 무형자산 및 인력 관리
+   - 자체 개발 SW/게임의 개발비 자산화 요건 충족 여부
+   - 개발 인력 인건비 비중 및 스톡옵션 비용 처리 내역
+   - 서버비, 마케팅비(UA비용) 등 변동비 효율성 분석`
+        };
+
+        const industryData = {
+            construction: { title: "건설분양업 분석 프롬프트", icon: "🏗️" },
+            manufacturing: { title: "제조업 분석 프롬프트", icon: "🏭" },
+            retail: { title: "도소매업 분석 프롬프트", icon: "🛒" },
+            bio: { title: "신약/바이오 분석 프롬프트", icon: "🧬" },
+            rental: { title: "임대업 분석 프롬프트", icon: "🏢" },
+            service: { title: "서비스업 분석 프롬프트", icon: "💼" },
+            hospitality: { title: "숙박/레저업 분석 프롬프트", icon: "🏨" },
+            trade: { title: "무역업 분석 프롬프트", icon: "🌐" },
+            it: { title: "IT/게임 분석 프롬프트", icon: "💻" },
+            others: { title: "공통 기본 분석 프롬프트", icon: "🎸" }
+        };
+
+        // =========================================
+        // 3. 기능 구현
+        // =========================================
+        const CUSTOM_INDUSTRIES_KEY = 'prompt_v2_custom_industries';
+        const ADMIN_PASSWORD_API_URL = 'https://script.google.com/macros/s/AKfycbzjPGoBwKYwBVvSl4TN9ScCwscPhDCguVQXVwJxzJoY4u8YR4ZzZQ4xVnY8t7KI_C7q/exec';
+        let customIndustries = {};
+
+        const promptTitle = document.getElementById('promptTitle');
+        const promptText = document.getElementById('promptText');
+        const initialView = document.getElementById('initialView');
+        const promptView = document.getElementById('promptView');
+        const toast = document.getElementById('toast');
+
+
+        function loadCustomIndustries() {
+            try {
+                customIndustries = JSON.parse(localStorage.getItem(CUSTOM_INDUSTRIES_KEY) || '{}');
+            } catch (error) {
+                customIndustries = {};
+            }
+
+            Object.keys(customIndustries).forEach(key => {
+                const item = customIndustries[key];
+                industryData[key] = { title: item.name + ' 분석 프롬프트', icon: '➕' };
+                industryPrompts[key] = item.prompt;
+            });
+        }
+
+        function persistCustomIndustries() {
+            localStorage.setItem(CUSTOM_INDUSTRIES_KEY, JSON.stringify(customIndustries));
+        }
+
+        function renderCustomIndustryButtons() {
+            const list = document.getElementById('customIndustryList');
+            if (!list) return;
+            list.innerHTML = '';
+
+            Object.keys(customIndustries).forEach(key => {
+                const item = customIndustries[key];
+                const button = document.createElement('button');
+                button.className = 'ind-btn custom-ind-btn';
+                button.dataset.key = key;
+                button.textContent = '＋ ' + item.name;
+                button.onclick = function() { selectIndustry(key); };
+                list.appendChild(button);
+            });
+        }
+
+
+        function openCustomIndustryPasswordModal() {
+            const modal = document.getElementById('customPasswordModal');
+            const input = document.getElementById('customAdminPassword');
+            const error = document.getElementById('customPasswordError');
+            if (input) input.value = '';
+            if (error) error.textContent = '';
+            modal.classList.add('show');
+            modal.setAttribute('aria-hidden', 'false');
+            setTimeout(() => input && input.focus(), 30);
+        }
+
+        function closeCustomIndustryPasswordModal() {
+            const modal = document.getElementById('customPasswordModal');
+            modal.classList.remove('show');
+            modal.setAttribute('aria-hidden', 'true');
+        }
+
+        function verifyCustomIndustryPassword() {
+            const input = document.getElementById('customAdminPassword');
+            const error = document.getElementById('customPasswordError');
+            const password = (input && input.value || '').trim();
+
+            if (!password) {
+                error.textContent = '관리자 비밀번호를 입력하세요.';
+                return;
+            }
+
+            error.textContent = '확인 중입니다...';
+            checkAdminPasswordForCustomIndustry(password)
+                .then(function() {
+                    closeCustomIndustryPasswordModal();
+                    openCustomIndustryModal();
+                })
+                .catch(function(err) {
+                    error.textContent = (err && err.message) || '관리자 비밀번호가 올바르지 않습니다.';
+                });
+        }
+
+        function checkAdminPasswordForCustomIndustry(password) {
+            if (window.google && google.script && google.script.run) {
+                return new Promise(function(resolve, reject) {
+                    google.script.run
+                        .withSuccessHandler(resolve)
+                        .withFailureHandler(reject)
+                        .checkAdminPassword(password);
+                });
+            }
+
+            return checkAdminPasswordByJsonp(password);
+        }
+
+        function checkAdminPasswordByJsonp(password) {
+            return new Promise(function(resolve, reject) {
+                const callbackName = 'promptPasswordCallback_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
+                const script = document.createElement('script');
+                const timeout = window.setTimeout(function() {
+                    cleanup();
+                    reject(new Error('비밀번호 확인 서버에 연결하지 못했습니다. Apps Script 배포 주소를 확인하세요.'));
+                }, 10000);
+
+                function cleanup() {
+                    window.clearTimeout(timeout);
+                    delete window[callbackName];
+                    if (script.parentNode) script.parentNode.removeChild(script);
+                }
+
+                window[callbackName] = function(result) {
+                    cleanup();
+                    if (result && result.ok) {
+                        resolve(true);
+                    } else {
+                        reject(new Error((result && result.message) || '관리자 비밀번호가 올바르지 않습니다.'));
+                    }
+                };
+
+                script.onerror = function() {
+                    cleanup();
+                    reject(new Error('비밀번호 확인 서버에 연결하지 못했습니다.'));
+                };
+                script.src = ADMIN_PASSWORD_API_URL + '?action=checkPromptPassword&password='
+                    + encodeURIComponent(password) + '&callback=' + encodeURIComponent(callbackName);
+                document.body.appendChild(script);
+            });
+        }
+
+        function openCustomIndustryModal() {
+            const modal = document.getElementById('customIndustryModal');
+            const name = document.getElementById('customIndustryName');
+            const prompt = document.getElementById('customIndustryPrompt');
+            const error = document.getElementById('customIndustryError');
+            if (name) name.value = '';
+            if (prompt) prompt.value = '';
+            if (error) error.textContent = '';
+            modal.classList.add('show');
+            modal.setAttribute('aria-hidden', 'false');
+            setTimeout(() => name && name.focus(), 30);
+        }
+
+        function closeCustomIndustryModal() {
+            const modal = document.getElementById('customIndustryModal');
+            modal.classList.remove('show');
+            modal.setAttribute('aria-hidden', 'true');
+        }
+
+        function saveCustomIndustry() {
+            const name = document.getElementById('customIndustryName').value.trim();
+            const prompt = document.getElementById('customIndustryPrompt').value.trim();
+            const error = document.getElementById('customIndustryError');
+
+            if (!name || !prompt) {
+                error.textContent = '업종명과 특화 프롬프트를 모두 입력하세요.';
+                return;
+            }
+
+            const key = 'custom_' + Date.now();
+            customIndustries[key] = { name: name, prompt: prompt };
+            industryData[key] = { title: name + ' 분석 프롬프트', icon: '➕' };
+            industryPrompts[key] = prompt;
+            persistCustomIndustries();
+            renderCustomIndustryButtons();
+            closeCustomIndustryModal();
+            selectIndustry(key);
+        }
+        function selectIndustry(key) {
+            // 버튼 활성화 상태 변경
+            document.querySelectorAll('.ind-btn').forEach(btn => btn.classList.remove('active'));
+            const activeButton = document.querySelector('.ind-btn[data-key="' + key + '"]');
+            if (activeButton) activeButton.classList.add('active');
+
+            // 화면 전환
+            initialView.style.display = 'none';
+            promptView.style.display = 'flex';
+
+            // 타이틀 및 아이콘 설정
+            const data = industryData[key];
+            promptTitle.innerHTML = `<span style="font-size:1.2rem;">${data.icon}</span> ${data.title}`;
+
+            // 프롬프트 내용 조합: 업종별 특화 섹션을 먼저 보여주고 공통 섹션을 뒤에 배치
+            let finalContent = "";
+            if (key === 'others') {
+                finalContent = `[${data.icon} ${data.title}]\n\n` + commonPrompt;
+            } else {
+                finalContent = `[${data.icon} ${data.title}]\n\n` + industryPrompts[key] + "\n\n--------------------------------------------------\n\n[공통 분석 요청사항]\n" + commonPrompt;
+            }
+
+            promptText.textContent = finalContent;
+        }
+
+        loadCustomIndustries();
+        renderCustomIndustryButtons();
+
+        function copyPrompt() {
+            const text = promptText.textContent;
+            if (!text) return;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                toast.classList.add('show');
+                setTimeout(() => toast.classList.remove('show'), 2000);
+            }).catch(err => alert('복사 권한을 확인해주세요.'));
+        }
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
